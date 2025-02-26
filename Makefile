@@ -38,8 +38,8 @@ IMAGES := server.elf client.elf
 # The system description file for this key generation example is named keygen.system.
 SYSTEM_FILE := keygen.system
 
-CFLAGS := -mcpu=$(CPU) -mstrict-align -nostdlib -ffreestanding -g -Wall \
-		  -I$(BOARD_DIR)/include -Iinclude -DBOARD_$(BOARD)
+CFLAGS := -mcpu=$(CPU) -mstrict-align -nostdlib -ffreestanding -g -Wall -Wno-unused-function \
+          -I$(BOARD_DIR)/include -Iinclude -DBOARD_$(BOARD)
 LDFLAGS := -L$(BOARD_DIR)/lib
 LIBS := -lmicrokit -Tmicrokit.ld
 

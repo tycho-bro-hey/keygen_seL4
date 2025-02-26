@@ -14,7 +14,9 @@ notify() asynchronous notification to the server PD.
 
 void init(void) {
     // Immediately request the server to print "hello"
-    microkit_dbg_puts("hello from the client\n");
+    microkit_dbg_puts("INITIATING KEY GENERATION...");
+    microkit_dbg_puts("\n");
+    microkit_dbg_puts("NOTIFYING SERVER...");
     microkit_notify(NOTIFY_CHANNEL);
 }
 
