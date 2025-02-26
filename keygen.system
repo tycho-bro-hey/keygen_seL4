@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system>
+    <!-- No shared memory mapping is needed for this simple notification example -->
+
+    <!-- Server: PD_KeyGen -->
+    <protection_domain name="server" priority="254" pp="true">
+        <program_image path="server.elf" />
+    </protection_domain>
+
+    <!-- Client: PD_consume -->
+    <protection_domain name="client" priority="253" pp="false">
+        <program_image path="client.elf" />
+    </protection_domain>
+
+    <!-- Single channel connecting the client and server -->
+    <channel>
+        <end pd="client" id="1" />
+        <end pd="server" id="1" />
+    </channel>
+</system>
