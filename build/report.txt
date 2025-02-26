@@ -7,8 +7,8 @@
 
 # Loader Regions
 
-       <Region name=PD-ELF server-0 addr=0x60248000 size=19296>
-       <Region name=PD-ELF server-1 addr=0x6024d000 size=96>
+       <Region name=PD-ELF server-0 addr=0x60248000 size=19608>
+       <Region name=PD-ELF server-1 addr=0x6024d000 size=112>
        <Region name=PD-ELF client-0 addr=0x6024e000 size=19408>
        <Region name=PD-ELF client-1 addr=0x60253000 size=96>
 
