@@ -10,6 +10,6 @@ We have developed three (3) protection domains (PD):
 ```mermaid
 graph LR
 A[PD1] -- notify() --> B[PD2] 
-B -- RW Produces Key --> C[Shared Memory]
-C -- R Consumes Key --> D[PD3]
+B -- Produces Key (RW) --> C[Shared Memory]
+C -- Consumes Key (R) --> D[PD3]
 ```
