@@ -27,14 +27,16 @@ MICROKIT_TOOL ?= $(MICROKIT_SDK)/bin/microkit
 # Common objects (e.g. printf support)
 PRINTF_OBJS := printf.o util.o
 
-# Server (PD_KeyGen) objects and client (PD_consume) objects
+# Server (PD_KeyGen) objects, client (PD_requeste)
+# and consumer (PD_consumer) objects
 SERVER_OBJS := $(PRINTF_OBJS) server.o
 CLIENT_OBJS := $(PRINTF_OBJS) client.o
+CONSUMER_OBJS := $(PRINTF_OBJS) consumer.o
 
 BOARD_DIR := $(MICROKIT_SDK)/board/$(BOARD)/$(MICROKIT_CONFIG)
 
 # In this simplified example we build two ELF images: one for the server and one for the client.
-IMAGES := server.elf client.elf
+IMAGES := server.elf client.elf consumer.elf
 # The system description file for this key generation example is named keygen.system.
 SYSTEM_FILE := keygen.system
 
@@ -65,6 +67,9 @@ $(BUILD_DIR)/server.elf: $(addprefix $(BUILD_DIR)/, $(SERVER_OBJS))
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 $(BUILD_DIR)/client.elf: $(addprefix $(BUILD_DIR)/, $(CLIENT_OBJS))
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+
+$(BUILD_DIR)/consumer.elf: $(addprefix $(BUILD_DIR)/, $(CONSUMER_OBJS))
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 $(IMAGE_FILE): $(addprefix $(BUILD_DIR)/, $(IMAGES)) $(SYSTEM_FILE)

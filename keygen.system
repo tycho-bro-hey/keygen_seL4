@@ -1,20 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <system>
-    <!-- No shared memory mapping is needed for this simple notification example -->
+    <!-- Shared memory region for key exchange -->
+    <memory_region name="shared_mem" size="0x1000" />
 
     <!-- Server: PD_KeyGen -->
     <protection_domain name="server" priority="254" pp="true">
         <program_image path="server.elf" />
+        <map mr="shared_mem" vaddr="0x4000000" perms="rw" setvar_vaddr="shared_mem_vaddr"/>
     </protection_domain>
 
-    <!-- Client: PD_consume -->
+    <!-- Client: PD_consume (Requests key generation) -->
     <protection_domain name="client" priority="253" pp="false">
         <program_image path="client.elf" />
     </protection_domain>
 
-    <!-- Single channel connecting the client and server -->
+    <!-- Consumer: PD_consumer (Reads and processes keys) -->
+    <protection_domain name="consumer" priority="252" pp="false">
+        <program_image path="consumer.elf" />
+        <map mr="shared_mem" vaddr="0x4000000" perms="r" setvar_vaddr="shared_mem_vaddr"/>
+    </protection_domain>
+
+    <!-- Channels for inter-domain communication -->
     <channel>
         <end pd="client" id="1" />
         <end pd="server" id="1" />
+    </channel>
+
+    <channel>
+        <end pd="consumer" id="2" />
+        <end pd="server" id="2" />
     </channel>
 </system>
