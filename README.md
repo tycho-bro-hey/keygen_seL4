@@ -8,6 +8,7 @@ We have developed three (3) protection domains (PD):
 3. (PD3) key consumer (consumer.c): the consumer waits until it is notified by the key generation server.  Once notified, the consumer reads from the shared memory space and prints the keys.
 
 ```mermaid
+graph LR
 A[PD1] -- notify() --> B[PD2] 
 B -- RW Produces Key --> C[Shared Memory]
 C -- R Consumes Key --> D[PD3]
