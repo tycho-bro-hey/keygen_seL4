@@ -1,33 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <system>
-    <!-- Shared memory region for key exchange -->
-    <memory_region name="shared_mem" size="0x1000" />
+    <!-- Shared memory regions for key exchange -->
+    <memory_region name="sk_shared_mem" size="0x1000" />
+    <memory_region name="pk_shared_mem" size="0x1000" />
 
-    <!-- Server: PD_KeyGen -->
-    <protection_domain name="server" priority="254" pp="true">
-        <program_image path="server.elf" />
-        <map mr="shared_mem" vaddr="0x4000000" perms="rw" setvar_vaddr="shared_mem_vaddr"/>
-    </protection_domain>
-
-    <!-- Client: PD_consume (Requests key generation) -->
+    <!-- Client: PD_Client (Requests key generation) -->
     <protection_domain name="client" priority="253" pp="false">
         <program_image path="client.elf" />
     </protection_domain>
 
-    <!-- Consumer: PD_consumer (Reads and processes keys) -->
-    <protection_domain name="consumer" priority="252" pp="false">
-        <program_image path="consumer.elf" />
-        <map mr="shared_mem" vaddr="0x4000000" perms="r" setvar_vaddr="shared_mem_vaddr"/>
+    <!-- Key Generation Server: PD_KeyGen -->
+    <protection_domain name="keygen" priority="254" pp="true">
+        <program_image path="keygen.elf" />
+        <map mr="sk_shared_mem" vaddr="0x4000000" perms="rw" setvar_vaddr="sk_shared_mem_vaddr"/>
+        <map mr="pk_shared_mem" vaddr="0x4001000" perms="rw" setvar_vaddr="pk_shared_mem_vaddr"/>
+    </protection_domain>
+
+    <!-- Secret Key Consumer: sk_consumer (Reads and processes secret key) -->
+    <protection_domain name="sk_consumer" priority="252" pp="false">
+        <program_image path="sk_consumer.elf" />
+        <map mr="sk_shared_mem" vaddr="0x4000000" perms="r" setvar_vaddr="sk_shared_mem_vaddr"/>
+    </protection_domain>
+
+    <!-- Public Key Consumer: pk_consumer (Reads and processes public key) -->
+    <protection_domain name="pk_consumer" priority="251" pp="false">
+        <program_image path="pk_consumer.elf" />
+        <map mr="pk_shared_mem" vaddr="0x4001000" perms="r" setvar_vaddr="pk_shared_mem_vaddr"/>
     </protection_domain>
 
     <!-- Channels for inter-domain communication -->
     <channel>
         <end pd="client" id="1" />
-        <end pd="server" id="1" />
+        <end pd="keygen" id="1" />
     </channel>
 
     <channel>
-        <end pd="consumer" id="2" />
-        <end pd="server" id="2" />
+        <end pd="sk_consumer" id="2" />
+        <end pd="keygen" id="2" />
+    </channel>
+
+    <channel>
+        <end pd="pk_consumer" id="3" />
+        <end pd="keygen" id="3" />
     </channel>
 </system>
