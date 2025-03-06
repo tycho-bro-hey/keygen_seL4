@@ -9,16 +9,11 @@ We have developed three (4) protection domains (PD):
 4. (PD4) secret key consumer (sk_consumer.c): the secret key consumer waits until it is notified by the key generation server.  Once notified, the secret key consumer reads from the shared memory space and prints the secret key.
 
 ```mermaid
-graph TD;
-    A[Key Generation] -->|produces secret key<br/>(read & write)| B[Shared Memory<br/>private key]
-    A --> C[Shared Memory<br/>secret key]
-    B --> D[Encrypt]
-    C --> E[Decrypt]
-
-    style A fill:#2196F3,stroke:#1E88E5,color:#FFFFFF
-    style B fill:#B71C1C,stroke:#880E4F,color:#FFFFFF
-    style C fill:#B71C1C,stroke:#880E4F,color:#FFFFFF
-    style D fill:#2196F3,stroke:#1E88E5,color:#FFFFFF
-    style E fill:#2196F3,stroke:#1E88E5,color:#FFFFFF
+graph LR;
+    PD1-->PD2;
+    PD2-->MEM1;
+    MEM1-->PD3;
+    PD2-->MEM2;
+    MEM2-->PD4;
 
 ```
