@@ -30,15 +30,15 @@ PRINTF_OBJS := printf.o util.o
 # Server (PD_KeyGen) objects, client (PD_requeste)
 # and consumer (PD_consumer) objects
 KEYGEN_OBJS := $(PRINTF_OBJS) keygen.o
-SK_CONSUMER_OBJS := $(PRINTF_OBJS) sk_consumer.o
-PK_CONSUMER_OBJS := $(PRINTF_OBJS) pk_consumer.o
+ENCRYPTION_OBJS := $(PRINTF_OBJS) encryption.o
+DECRYPTION_OBJS := $(PRINTF_OBJS) decryption.o
 
 BOARD_DIR := $(MICROKIT_SDK)/board/$(BOARD)/$(MICROKIT_CONFIG)
 
 # IMAGES for protection domains
-IMAGES := keygen.elf client.elf sk_consumer.elf pk_consumer.elf
+IMAGES := keygen.elf client.elf encryption.elf decryption.elf
 # The system description file for this key generation example is named keygen.system.
-SYSTEM_FILE := keygen.system
+SYSTEM_FILE := LWE.system
 
 CFLAGS := -mcpu=$(CPU) -mstrict-align -nostdlib -ffreestanding -g -Wall -Wno-unused-function \
           -I$(BOARD_DIR)/include -Iinclude -DBOARD_$(BOARD)
@@ -69,10 +69,10 @@ $(BUILD_DIR)/keygen.elf: $(addprefix $(BUILD_DIR)/, $(KEYGEN_OBJS))
 $(BUILD_DIR)/client.elf: $(addprefix $(BUILD_DIR)/, $(CLIENT_OBJS))
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-$(BUILD_DIR)/sk_consumer.elf: $(addprefix $(BUILD_DIR)/, $(SK_CONSUMER_OBJS))
+$(BUILD_DIR)/encryption.elf: $(addprefix $(BUILD_DIR)/, $(ENCRYPTION_OBJS))
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-$(BUILD_DIR)/pk_consumer.elf: $(addprefix $(BUILD_DIR)/, $(PK_CONSUMER_OBJS))
+$(BUILD_DIR)/decryption.elf: $(addprefix $(BUILD_DIR)/, $(DECRYPTION_OBJS))
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 $(IMAGE_FILE): $(addprefix $(BUILD_DIR)/, $(IMAGES)) $(SYSTEM_FILE)

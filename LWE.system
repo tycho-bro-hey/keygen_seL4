@@ -17,16 +17,16 @@
         <map mr="pk_shared_mem" vaddr="0x4001000" perms="rw" setvar_vaddr="pk_shared_mem_vaddr"/>
     </protection_domain>
 
-    <!-- Secret Key Consumer: sk_consumer -->
-    <protection_domain name="sk_consumer" priority="252" pp="false">
-        <program_image path="sk_consumer.elf" />
+    <!-- Secret Key Consumer: decryption domain-->
+    <protection_domain name="decryption" priority="252" pp="false">
+        <program_image path="decryption.elf" />
         <map mr="sk_shared_mem" vaddr="0x4000000" perms="r" setvar_vaddr="sk_shared_mem_vaddr"/>
         <map mr="ct_shared_mem" vaddr="0x4002000" perms="r" setvar_vaddr="ct_shared_mem_vaddr"/> <!-- NEW -->
     </protection_domain>
 
-    <!-- Public Key Consumer: pk_consumer -->
-    <protection_domain name="pk_consumer" priority="251" pp="false">
-        <program_image path="pk_consumer.elf" />
+    <!-- Public Key Consumer: enciphering domain -->
+    <protection_domain name="encryption" priority="251" pp="false">
+        <program_image path="encryption.elf" />
         <map mr="pk_shared_mem" vaddr="0x4001000" perms="r" setvar_vaddr="pk_shared_mem_vaddr"/>
         <map mr="ct_shared_mem" vaddr="0x4002000" perms="rw" setvar_vaddr="ct_shared_mem_vaddr"/> <!-- NEW -->
     </protection_domain>
@@ -38,18 +38,18 @@
     </channel>
 
     <channel>
-        <end pd="sk_consumer" id="2" />
+        <end pd="decryption" id="2" />
         <end pd="keygen" id="2" />
     </channel>
 
     <channel>
-        <end pd="pk_consumer" id="3" />
+        <end pd="encryption" id="3" />
         <end pd="keygen" id="3" />
     </channel>
 
     <channel>
-        <end pd="pk_consumer" id="4" />
-        <end pd="sk_consumer" id="4" />
+        <end pd="encryption" id="4" />
+        <end pd="decryption" id="4" />
     </channel>
 
 </system>
