@@ -7,9 +7,9 @@
 #define MAX_N_COLS 4
 #define Q 1024
 #define S 1
-#define PLAINTEXT_MSG 1
+#define PLAINTEXT_MSG 0
 
-// Shared memory symbols (must match .system file)
+// shared memory
 uintptr_t pk_shared_mem_vaddr;
 uintptr_t ct_shared_mem_vaddr;
 
@@ -32,7 +32,7 @@ static int reduce_mod_q(int value, int q) {
     return r - (q / 2);
 }
 
-// Aᵗ * r
+// A' * r
 static void matrix_vector_multiply(
     int matrix[MAX_N][MAX_N_COLS],
     int vector[MAX_N],
@@ -52,7 +52,7 @@ void encrypt_and_store_ciphertext() {
     int *shared_mem = (int *)pk_shared_mem_vaddr;
     int *ct_mem = (int *)ct_shared_mem_vaddr;
 
-    // Reconstruct full public key: A | b
+    // reconstruct full public key: A | b
     int public_key[MAX_N][MAX_N_COLS + 1];
     int offset = 0;
     for (int i = 0; i < MAX_N; i++) {
@@ -61,7 +61,7 @@ void encrypt_and_store_ciphertext() {
         }
     }
 
-    // Copy A portion of public key
+    // copy A portion of public key
     int A_matrix[MAX_N][MAX_N_COLS];
     for (int i = 0; i < MAX_N; i++) {
         for (int j = 0; j < MAX_N_COLS; j++) {
@@ -69,17 +69,17 @@ void encrypt_and_store_ciphertext() {
         }
     }
 
-    // Sample r ∈ {-1, 0, 1}
+    // sample r ∈ {-1, 0, 1}
     int r[MAX_N];
     for (int i = 0; i < MAX_N; i++) {
         r[i] = randomUniformInt(1);
     }
 
-    // Compute c1 = Aᵗ * r
+    // compute c1 = A' * r
     int c1[MAX_N_COLS];
     matrix_vector_multiply(A_matrix, r, c1, Q);
 
-    // Compute c2 = bᵗ * r + noise + msg*(q/2)
+    // compute c2 = b' * r + noise + msg*(q/2)
     int c2 = 0;
     for (int i = 0; i < MAX_N; i++) {
         c2 += public_key[i][MAX_N_COLS] * r[i];
@@ -88,13 +88,12 @@ void encrypt_and_store_ciphertext() {
     c2 += PLAINTEXT_MSG * (Q / 2);
     c2 = reduce_mod_q(c2, Q);
 
-    // Write ciphertext to shared memory
+    // write ciphertext to shared memory
     for (int i = 0; i < MAX_N_COLS; i++) {
         ct_mem[i] = c1[i];
     }
     ct_mem[MAX_N_COLS] = c2;
 
-    // Print
     microkit_dbg_puts("PK_CONSUMER: Ciphertext written = ");
     for (int i = 0; i < MAX_N_COLS + 1; i++) {
         char buf[8];
@@ -102,7 +101,7 @@ void encrypt_and_store_ciphertext() {
         microkit_dbg_puts(buf);
     }
     microkit_dbg_puts("\n");
-    microkit_notify(4);  // notify sk_consumer
+    microkit_notify(4);  // notify decryption that ct is ready
 }
 
 void init(void) {

@@ -10,7 +10,7 @@
 #define MAX_N_COLS 4
 #define MOD_Q_VALUE 1024
 
-// Shared memory regions (set by system description file)
+// Shared memory regions
 uintptr_t sk_shared_mem_vaddr;
 uintptr_t pk_shared_mem_vaddr;
 
