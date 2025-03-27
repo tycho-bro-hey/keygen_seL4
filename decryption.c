@@ -22,19 +22,19 @@ static int reduce_mod_q(int value, int q) {
 
 // LWE decryption for integer messages
 static int decrypt(int *ciphertext, int *secret_key, int N, int t, int q) {
-    // Step 1: inner product of secret key and c1
+    // inner product of secret key and c1
     int inner_product = 0;
     for (int i = 0; i < N; i++) {
         inner_product += secret_key[i] * ciphertext[i];
     }
 
-    // Step 2: difference = c2 - (s · c1)
+    // difference = c2 - (s · c1)
     int difference = ciphertext[N] - inner_product;
 
-    // Step 3: center mod q
+    // center mod q
     difference = reduce_mod_q(difference, q);
 
-    // Step 4: scale rounding
+    // scale rounding
     int alpha = q / t;
     int recovered_message = (difference + (alpha / 2)) / alpha;
 
@@ -60,7 +60,7 @@ void decrypt_from_shared_memory() {
     // Decrypt the message
     int result = decrypt(ciphertext, secret_key, MAX_N, T, Q);
 
-    // Print result
+    // print result
     microkit_dbg_puts("DECRYPTION: Recovered message = ");
     char buf[12];
     snprintf(buf, sizeof(buf), "%d\n", result);
