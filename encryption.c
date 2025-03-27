@@ -2,114 +2,103 @@
 #include <microkit.h>
 #include "printf.h"
 
-#define PK_CONSUMER_CHANNEL 3
+#define ENCRYPTION_CHANNEL 3
+#define DECRYPTION_CHANNEL 4
 #define MAX_N 4
 #define MAX_N_COLS 4
 #define Q 1024
-#define S 1
-#define PLAINTEXT_MSG 0
+#define S 1       // noise parameter for error
+#define T 16      // message space: integers in [-T/2, T/2]
 
-// shared memory
+// Shared memory
 uintptr_t pk_shared_mem_vaddr;
 uintptr_t ct_shared_mem_vaddr;
 
-// PRNG seed
-static unsigned int rand_seed = 123;
-
+// Simple PRNG
 static int simple_rand() {
+    static unsigned int rand_seed = 123;  // fixed seed for reproducibility
     rand_seed = (rand_seed * 1103515245 + 12345) & 0x7FFFFFFF;
     return rand_seed;
 }
 
+// Sample from uniform [-s, s]
 static int randomUniformInt(int s) {
     int range = 2 * s + 1;
     return (simple_rand() % range) - s;
 }
 
+// Reduce mod q to range [-q/2, q/2)
 static int reduce_mod_q(int value, int q) {
     int r = value % q;
-    if (r < 0) r += q;
-    return r - (q / 2);
+    if (r < 0) r += q;        
+    if (r >= q / 2) r -= q;    
+    return r;
 }
 
-// A' * r
-static void matrix_vector_multiply(
-    int matrix[MAX_N][MAX_N_COLS],
-    int vector[MAX_N],
-    int result[MAX_N],
-    int q
+// Integer message encryption using public key
+static void encrypt_integer_message(
+    int public_key[MAX_N][MAX_N_COLS + 1],
+    int message,
+    int ciphertext[MAX_N_COLS + 1]
 ) {
-    for (int j = 0; j < MAX_N_COLS; j++) {
-        result[j] = 0;
-        for (int i = 0; i < MAX_N; i++) {
-            result[j] += matrix[i][j] * vector[i];
-        }
-        result[j] = reduce_mod_q(result[j], q);
-    }
-}
-
-void encrypt_and_store_ciphertext() {
-    int *shared_mem = (int *)pk_shared_mem_vaddr;
-    int *ct_mem = (int *)ct_shared_mem_vaddr;
-
-    // reconstruct full public key: A | b
-    int public_key[MAX_N][MAX_N_COLS + 1];
-    int offset = 0;
-    for (int i = 0; i < MAX_N; i++) {
-        for (int j = 0; j < MAX_N_COLS + 1; j++) {
-            public_key[i][j] = shared_mem[offset++];
-        }
-    }
-
-    // copy A portion of public key
-    int A_matrix[MAX_N][MAX_N_COLS];
-    for (int i = 0; i < MAX_N; i++) {
-        for (int j = 0; j < MAX_N_COLS; j++) {
-            A_matrix[i][j] = public_key[i][j];
-        }
-    }
-
-    // sample r ∈ {-1, 0, 1}
     int r[MAX_N];
+    int alpha = Q / T;
+
+    // r ∈ {−1, 0, 1}ⁿ
     for (int i = 0; i < MAX_N; i++) {
         r[i] = randomUniformInt(1);
     }
 
-    // compute c1 = A' * r
-    int c1[MAX_N_COLS];
-    matrix_vector_multiply(A_matrix, r, c1, Q);
+    // c1 = rᵗ * A
+    for (int j = 0; j < MAX_N_COLS; j++) {
+        ciphertext[j] = 0;
+        for (int i = 0; i < MAX_N; i++) {
+            ciphertext[j] += public_key[i][j] * r[i];
+        }
+        ciphertext[j] = reduce_mod_q(ciphertext[j], Q);
+    }
 
-    // compute c2 = b' * r + noise + msg*(q/2)
+    // c2 = rᵗ * b + m * alpha + e
     int c2 = 0;
     for (int i = 0; i < MAX_N; i++) {
         c2 += public_key[i][MAX_N_COLS] * r[i];
     }
+    c2 += message * alpha;
     c2 += randomUniformInt(S);
-    c2 += PLAINTEXT_MSG * (Q / 2);
     c2 = reduce_mod_q(c2, Q);
 
-    // write ciphertext to shared memory
-    for (int i = 0; i < MAX_N_COLS; i++) {
-        ct_mem[i] = c1[i];
-    }
-    ct_mem[MAX_N_COLS] = c2;
+    ciphertext[MAX_N_COLS] = c2;
+}
 
-    microkit_dbg_puts("PK_CONSUMER: Ciphertext written = ");
+// Read public key from shared memory, encrypt message, store ciphertext
+void encrypt_and_store_ciphertext() {
+    int (*public_key)[MAX_N_COLS + 1] = (int (*)[MAX_N_COLS + 1])pk_shared_mem_vaddr;
+    int *ct_mem = (int *)ct_shared_mem_vaddr;
+    int ciphertext[MAX_N_COLS + 1];
+
+    // Example message to encrypt
+    int message = 5;
+
+    encrypt_integer_message(public_key, message, ciphertext);
+
+    microkit_dbg_puts("ENCRYPTION: Ciphertext = ");
     for (int i = 0; i < MAX_N_COLS + 1; i++) {
-        char buf[8];
-        snprintf(buf, sizeof(buf), "%d ", ct_mem[i]);
+        char buf[12];
+        snprintf(buf, sizeof(buf), "%d ", ciphertext[i]);
         microkit_dbg_puts(buf);
+        ct_mem[i] = ciphertext[i];  // write to shared memory
     }
     microkit_dbg_puts("\n");
-    microkit_notify(4);  // notify decryption that ct is ready
+
+    microkit_notify(DECRYPTION_CHANNEL);  // notify decryption PD
 }
 
 void init(void) {
-    microkit_dbg_puts("PK_CONSUMER: Waiting for public key data...\n");
+    microkit_dbg_puts("ENCRYPTION: Waiting to be notified...\n");
 }
 
 void notified(microkit_channel channel) {
-    if (channel == PK_CONSUMER_CHANNEL) {
+    if (channel == ENCRYPTION_CHANNEL) {
         encrypt_and_store_ciphertext();
     }
 }

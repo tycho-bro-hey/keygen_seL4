@@ -11,9 +11,9 @@
        <Region name=PD-ELF client-1 addr=0x6024e000 size=96>
        <Region name=PD-ELF keygen-0 addr=0x6024f000 size=20904>
        <Region name=PD-ELF keygen-1 addr=0x60255000 size=128>
-       <Region name=PD-ELF decryption-0 addr=0x60256000 size=19248>
+       <Region name=PD-ELF decryption-0 addr=0x60256000 size=19256>
        <Region name=PD-ELF decryption-1 addr=0x6025b000 size=112>
-       <Region name=PD-ELF encryption-0 addr=0x6025c000 size=20888>
+       <Region name=PD-ELF encryption-0 addr=0x6025c000 size=20632>
        <Region name=PD-ELF encryption-1 addr=0x60262000 size=128>
 
 # Monitor (Initial Task) Info
