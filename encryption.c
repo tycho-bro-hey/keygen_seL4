@@ -3,11 +3,11 @@
 #include "printf.h"
 
 #define ENCRYPTION_CHANNEL 3
-#define DECRYPTION_CHANNEL 4
+#define LWE_OPS_CHANNEL 4
 #define MAX_N 4
 #define MAX_N_COLS 4
 #define Q 1024
-#define S 1       // noise parameter for error
+#define S 1     
 #define T 16      // message space: integers in [-T/2, T/2]
 
 // Shared memory
@@ -16,7 +16,7 @@ uintptr_t ct_shared_mem_vaddr;
 
 // Simple PRNG
 static int simple_rand() {
-    static unsigned int rand_seed = 123;  // fixed seed for reproducibility
+    static unsigned int rand_seed = 123;
     rand_seed = (rand_seed * 1103515245 + 12345) & 0x7FFFFFFF;
     return rand_seed;
 }
@@ -44,12 +44,12 @@ static void encrypt_integer_message(
     int r[MAX_N];
     int alpha = Q / T;
 
-    // r ∈ {−1, 0, 1}ⁿ
+    // r ∈ {−1, 0, 1}^n
     for (int i = 0; i < MAX_N; i++) {
         r[i] = randomUniformInt(1);
     }
 
-    // c1 = rᵗ * A
+    // c1 = r' * A
     for (int j = 0; j < MAX_N_COLS; j++) {
         ciphertext[j] = 0;
         for (int i = 0; i < MAX_N; i++) {
@@ -58,7 +58,7 @@ static void encrypt_integer_message(
         ciphertext[j] = reduce_mod_q(ciphertext[j], Q);
     }
 
-    // c2 = rᵗ * b + m * alpha + e
+    // c2 = r' * b + m * alpha + e
     int c2 = 0;
     for (int i = 0; i < MAX_N; i++) {
         c2 += public_key[i][MAX_N_COLS] * r[i];
@@ -77,7 +77,7 @@ void encrypt_and_store_ciphertext() {
     int ciphertext[MAX_N_COLS + 1];
 
     // Example message to encrypt
-    int message = 5;
+    int message = 2;
 
     encrypt_integer_message(public_key, message, ciphertext);
 
@@ -90,7 +90,7 @@ void encrypt_and_store_ciphertext() {
     }
     microkit_dbg_puts("\n");
 
-    microkit_notify(DECRYPTION_CHANNEL);  // notify decryption PD
+    microkit_notify(LWE_OPS_CHANNEL);  // notify decryption PD
 }
 
 void init(void) {

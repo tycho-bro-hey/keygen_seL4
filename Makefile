@@ -32,11 +32,12 @@ PRINTF_OBJS := printf.o util.o
 KEYGEN_OBJS := $(PRINTF_OBJS) keygen.o
 ENCRYPTION_OBJS := $(PRINTF_OBJS) encryption.o
 DECRYPTION_OBJS := $(PRINTF_OBJS) decryption.o
+LWE_OPS_OBJS := $(PRINTF_OBJS) LWE_operations.o
 
 BOARD_DIR := $(MICROKIT_SDK)/board/$(BOARD)/$(MICROKIT_CONFIG)
 
 # IMAGES for protection domains
-IMAGES := keygen.elf client.elf encryption.elf decryption.elf
+IMAGES := keygen.elf client.elf encryption.elf decryption.elf LWE_operations.elf
 # The system description file for this key generation example is named keygen.system.
 SYSTEM_FILE := LWE.system
 
@@ -73,6 +74,9 @@ $(BUILD_DIR)/encryption.elf: $(addprefix $(BUILD_DIR)/, $(ENCRYPTION_OBJS))
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 $(BUILD_DIR)/decryption.elf: $(addprefix $(BUILD_DIR)/, $(DECRYPTION_OBJS))
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+
+$(BUILD_DIR)/LWE_operations.elf: $(addprefix $(BUILD_DIR)/, $(LWE_OPS_OBJS))
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 $(IMAGE_FILE): $(addprefix $(BUILD_DIR)/, $(IMAGES)) $(SYSTEM_FILE)

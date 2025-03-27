@@ -3,14 +3,15 @@
     <!-- Shared memory regions for key exchange -->
     <memory_region name="sk_shared_mem" size="0x1000" />
     <memory_region name="pk_shared_mem" size="0x1000" />
-    <memory_region name="ct_shared_mem" size="0x1000" /> <!-- New ciphertext region -->
+    <memory_region name="ct_shared_mem" size="0x1000" /> 
+    <memory_region name="op_shared_mem" size="0x1000" />
 
-    <!-- Client: PD_Client -->
+    <!-- Client: requests key generation -->
     <protection_domain name="client" priority="253" pp="false">
         <program_image path="client.elf" />
     </protection_domain>
 
-    <!-- Key Generation Server: PD_KeyGen -->
+    <!-- Key Generation Server: generates secret and public key -->
     <protection_domain name="keygen" priority="254" pp="true">
         <program_image path="keygen.elf" />
         <map mr="sk_shared_mem" vaddr="0x4000000" perms="rw" setvar_vaddr="sk_shared_mem_vaddr"/>
@@ -21,14 +22,21 @@
     <protection_domain name="decryption" priority="252" pp="false">
         <program_image path="decryption.elf" />
         <map mr="sk_shared_mem" vaddr="0x4000000" perms="r" setvar_vaddr="sk_shared_mem_vaddr"/>
-        <map mr="ct_shared_mem" vaddr="0x4002000" perms="r" setvar_vaddr="ct_shared_mem_vaddr"/> <!-- NEW -->
+        <map mr="op_shared_mem" vaddr="0x4003000" perms="r" setvar_vaddr="op_shared_mem_vaddr"/>
     </protection_domain>
 
     <!-- Public Key Consumer: enciphering domain -->
     <protection_domain name="encryption" priority="251" pp="false">
         <program_image path="encryption.elf" />
         <map mr="pk_shared_mem" vaddr="0x4001000" perms="r" setvar_vaddr="pk_shared_mem_vaddr"/>
-        <map mr="ct_shared_mem" vaddr="0x4002000" perms="rw" setvar_vaddr="ct_shared_mem_vaddr"/> <!-- NEW -->
+        <map mr="ct_shared_mem" vaddr="0x4002000" perms="rw" setvar_vaddr="ct_shared_mem_vaddr"/> 
+    </protection_domain>
+
+    <!-- LWE Operations Domain: performs homomorphic operations -->
+    <protection_domain name="LWE_operations" priority="250" pp="false">
+        <program_image path="LWE_operations.elf" />
+        <map mr="ct_shared_mem" vaddr="0x4002000" perms="r" setvar_vaddr="ct_shared_mem_vaddr"/>
+        <map mr="op_shared_mem" vaddr="0x4003000" perms="rw" setvar_vaddr="op_shared_mem_vaddr"/>
     </protection_domain>
 
     <!-- Channels for inter-domain communication -->
@@ -49,7 +57,12 @@
 
     <channel>
         <end pd="encryption" id="4" />
-        <end pd="decryption" id="4" />
+        <end pd="LWE_operations" id="4" />
+    </channel>
+
+    <channel>
+        <end pd="LWE_operations" id="5" />
+        <end pd="decryption" id="5" />
     </channel>
 
 </system>
